@@ -105,7 +105,34 @@ class Dataset_Futs(Dataset):
             ID: ID of sample
         """
         X = self.feature_df.loc[self.IDs[ind][0] : self.IDs[ind][1]].values  # (seq_length, feat_dim) array
-        y = self.labels_df.loc[self.IDs[ind][0]].values  # (num_labels,) array
+        y = self.labels_df.loc[self.IDs[ind][1]].values  # (num_labels,) array
+
+        return torch.from_numpy(X), torch.from_numpy(y)#, self.IDs[ind][0]
+
+    def __len__(self):
+        return len(self.IDs)
+
+class Dataset_Futs_Pretrain(Dataset):
+    def __init__(self, root_dir: str, pattern: str, out_len: int):
+        super(Dataset_Futs_Pretrain, self).__init__()
+        self.out_len = out_len
+        self.data = FutsData(root_dir, pattern) 
+        self.IDs = self.data.all_IDs # list of data IDs, but also mapping between integer index and ID
+        self.feature_df = self.data.feature_df
+        self.labels_df = self.data.labels_df
+
+    def __getitem__(self, ind):
+        """
+        For a given integer index, returns the corresponding (seq_length, feat_dim) array and a noise mask of same shape
+        Args:
+            ind: integer index of sample in dataset
+        Returns:
+            X: (seq_length, feat_dim) tensor of the multivariate time series corresponding to a sample
+            y: (num_labels,) tensor of labels (num_labels > 1 for multi-task models) for each sample
+            ID: ID of sample
+        """
+        X = self.feature_df.loc[self.IDs[ind][0] : self.IDs[ind][1]].values  # (feature_seq_length, feat_dim) array
+        y = self.feature_df.loc[self.IDs[ind][1]+1 : self.IDs[ind][1] + self.out_len].values  # (pred_seq_len, feat_dim) array
 
         return torch.from_numpy(X), torch.from_numpy(y)#, self.IDs[ind][0]
 

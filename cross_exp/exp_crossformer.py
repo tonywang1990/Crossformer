@@ -8,7 +8,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from cross_models.cross_former import Crossformer
-from data.data_loader import Dataset_Futs  # , Dataset_MTS
+from data.data_loader import Dataset_Futs, Dataset_Futs_Pretrain  # , Dataset_MTS
 from torch import optim
 from torch.nn import DataParallel
 from torch.utils.data import DataLoader
@@ -68,9 +68,11 @@ class Exp_crossformer(Exp_Basic):
             data_path = args.train_path 
         elif flag == 'val':
             data_path = args.val_path 
-        data_set = Dataset_Futs(
+
+        data_set = Dataset_Futs_Pretrain(
             root_dir=args.root_path,
             pattern=data_path,
+            out_len=args.out_len,
         )
 
         print(flag, len(data_set))
@@ -254,7 +256,7 @@ class Exp_crossformer(Exp_Basic):
             batch_y = dataset_object.inverse_transform(batch_y)
         
         # TODO: add args to select between point prediction and vector prediciton
-        outputs = self._point_prediction(outputs).reshape(batch_y.shape)
+        #outputs = self._point_prediction(outputs).reshape(batch_y.shape)
 
         return outputs, batch_y
 
