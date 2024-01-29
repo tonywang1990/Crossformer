@@ -1,5 +1,6 @@
 import argparse
 import os
+
 import torch
 
 from cross_exp.exp_crossformer import Exp_crossformer
@@ -10,7 +11,7 @@ parser = argparse.ArgumentParser(description='CrossFormer')
 parser.add_argument('--data', type=str, required=True, default='ETTh1', help='data')
 parser.add_argument('--root_path', type=str, default='./datasets/', help='root path of the data file')
 parser.add_argument('--data_path', type=str, default='ETTh1.csv', help='data file')  
-parser.add_argument('--data_split', type=str, default='0.7,0.1,0.2',help='train/val/test split, can be ratio or number')
+#parser.add_argument('--data_split', type=str, default='0.7,0.1,0.2',help='train/val/test split, can be ratio or number')
 parser.add_argument('--checkpoints', type=str, default='./checkpoints/', help='location to store model checkpoints')
 
 parser.add_argument('--in_len', type=int, default=96, help='input MTS length (T)')
@@ -67,6 +68,8 @@ if args.data in data_parser.keys():
     args.data_path = data_info['data']
     args.data_dim = data_info['data_dim']
     args.data_split = data_info['split']
+elif args.data == 'futs':
+    pass
 else:
     args.data_split = string_split(args.data_split)
 
@@ -86,4 +89,4 @@ for ii in range(args.itr):
     exp.train(setting)
     
     print('>>>>>>>testing : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'.format(setting))
-    exp.test(setting, args.save_pred)
+    #exp.test(setting, args.save_pred)

@@ -1,14 +1,19 @@
+import glob
+import logging
 import os
+import random
+import warnings
+from multiprocessing import Pool, cpu_count
+
 import numpy as np
 import pandas as pd
-
 import torch
-from torch.utils.data import Dataset, DataLoader
-
+from data.dataset import FutsData
+from torch.utils.data import DataLoader, Dataset
 from utils.tools import StandardScaler
 
-import warnings
 warnings.filterwarnings('ignore')
+logger = logging.getLogger("__main__")
 
 class Dataset_MTS(Dataset):
     def __init__(self, root_path, data_path='ETTh1.csv', flag='train', size=None, 
@@ -79,3 +84,30 @@ class Dataset_MTS(Dataset):
 
     def inverse_transform(self, data):
         return self.scaler.inverse_transform(data)
+
+# TODO: check if data normalization is needed.
+class Dataset_Futs(Dataset):
+    def __init__(self, root_dir: str, split: str, data_path: str):
+        super(Dataset_Futs, self).__init__()
+        self.data = FutsData(root_dir, split, data_path)
+        self.IDs = self.data.all_IDs # list of data IDs, but also mapping between integer index and ID
+        self.feature_df = self.data.feature_df
+        self.labels_df = self.data.labels_df
+
+    def __getitem__(self, ind):
+        """
+        For a given integer index, returns the corresponding (seq_length, feat_dim) array and a noise mask of same shape
+        Args:
+            ind: integer index of sample in dataset
+        Returns:
+            X: (seq_length, feat_dim) tensor of the multivariate time series corresponding to a sample
+            y: (num_labels,) tensor of labels (num_labels > 1 for multi-task models) for each sample
+            ID: ID of sample
+        """
+        X = self.feature_df.loc[self.IDs[ind][0] : self.IDs[ind][1]].values  # (seq_length, feat_dim) array
+        y = self.labels_df.loc[self.IDs[ind][0]].values  # (num_labels,) array
+
+        return torch.from_numpy(X), torch.from_numpy(y)#, self.IDs[ind][0]
+
+    def __len__(self):
+        return len(self.IDs)
