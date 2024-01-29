@@ -87,9 +87,9 @@ class Dataset_MTS(Dataset):
 
 # TODO: check if data normalization is needed.
 class Dataset_Futs(Dataset):
-    def __init__(self, root_dir: str, split: str, data_path: str):
+    def __init__(self, root_dir: str, pattern: str):
         super(Dataset_Futs, self).__init__()
-        self.data = FutsData(root_dir, split, data_path)
+        self.data = FutsData(root_dir, pattern)
         self.IDs = self.data.all_IDs # list of data IDs, but also mapping between integer index and ID
         self.feature_df = self.data.feature_df
         self.labels_df = self.data.labels_df

@@ -64,10 +64,13 @@ class Exp_crossformer(Exp_Basic):
         #    size=[args.in_len, args.out_len],
         #    data_split = args.data_split,
         # )
+        if flag == 'train':
+            data_path = args.train_path 
+        elif flag == 'val':
+            data_path = args.val_path 
         data_set = Dataset_Futs(
             root_dir=args.root_path,
-            split=flag,
-            data_path=args.data_path,
+            pattern=data_path,
         )
 
         print(flag, len(data_set))
@@ -135,7 +138,6 @@ class Exp_crossformer(Exp_Basic):
 
                 model_optim.zero_grad()
                 pred, true = self._process_one_batch(train_data, batch_x, batch_y)
-                print(batch_x.shape, batch_y.shape, pred.shape, true.shape)
 
                 loss = criterion(pred, true)
                 train_loss.append(loss.item())
@@ -268,19 +270,7 @@ class Exp_crossformer(Exp_Basic):
         #    scale = True,
         #    scale_statistic = args.scale_statistic,
         # )
-        data_set = Dataset_Futs(
-            root_dir=args.root_path,
-            split="val",
-            data_path=args.data_path,
-        )
-
-        data_loader = DataLoader(
-            data_set,
-            batch_size=args.batch_size,
-            shuffle=False,
-            num_workers=args.num_workers,
-            drop_last=False,
-        )
+        data_set, data_loader = self._get_data(flag="val")
 
         self.model.eval()
 

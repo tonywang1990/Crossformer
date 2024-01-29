@@ -38,7 +38,6 @@ class FutsData(BaseData):
     def __init__(
         self,
         root_dir,
-        split,
         pattern,
         file_list=None,
         n_proc=1,
@@ -48,7 +47,7 @@ class FutsData(BaseData):
         self.max_seq_len = 1024
         self.lookahead = 40
         # process features
-        feature_df = self.get_feature_data(os.path.join(root_dir, pattern.format(split=split)))
+        feature_df = self.get_feature_data(os.path.join(root_dir, pattern))
         num_rows = feature_df.shape[0]
         # process labels
         labels_df = self.get_label_data(feature_df, lookahead=self.lookahead, seq_len=self.max_seq_len)

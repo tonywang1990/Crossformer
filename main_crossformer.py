@@ -1,4 +1,5 @@
 import argparse
+import logging
 import os
 
 import torch
@@ -6,11 +7,14 @@ import torch
 from cross_exp.exp_crossformer import Exp_crossformer
 from utils.tools import string_split
 
+logging.basicConfig(level=logging.INFO)
+
 parser = argparse.ArgumentParser(description='CrossFormer')
 
 parser.add_argument('--data', type=str, required=True, default='ETTh1', help='data')
 parser.add_argument('--root_path', type=str, default='./datasets/', help='root path of the data file')
-parser.add_argument('--data_path', type=str, default='ETTh1.csv', help='data file')  
+parser.add_argument('--train_path', type=str, default='ETTh1.csv', help='train data file')  
+parser.add_argument('--val_path', type=str, default='ETTh1.csv', help='val data file')  
 #parser.add_argument('--data_split', type=str, default='0.7,0.1,0.2',help='train/val/test split, can be ratio or number')
 parser.add_argument('--checkpoints', type=str, default='./checkpoints/', help='location to store model checkpoints')
 
