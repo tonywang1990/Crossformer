@@ -43,12 +43,16 @@ FEATURE_COLS = [
 
 VALIDATION_COL = "book_valid_field::book=book_UR"
 
+TS_COLS = ['ts']
+
 LABEL_COLS = [
     #"extdata::book=book_UR::data_name=forward_return_vwap_10s",
     #"extdata::book=book_UR::data_name=forward_return_vwap_60s",
     "extdata::book=book_UR::data_name=forward_return_vwap_600s",
     #"extdata::book=book_UR::data_name=forward_return_vwap_1800s",
 ]
+
+ALL_COLS = FEATURE_COLS + LABEL_COLS + TS_COLS 
 
 
 class BaseData(object):
@@ -93,6 +97,7 @@ class FutsData(BaseData):
         # process labels
         feature_df = data_df[FEATURE_COLS]
         labels_df = data_df[LABEL_COLS]
+        ts_df = data_df[TS_COLS]
         # all_IDs uses a compressed representation: i-th position in all_ID maps to (start, end) of the feature_df and start of the label_df.
         self.all_IDs = [
             [i-self.max_seq_len+1, i]
@@ -100,6 +105,7 @@ class FutsData(BaseData):
         ]
         self.all_df = feature_df
         self.labels_df = labels_df
+        self.ts_df = ts_df
         if limit_size is not None:
             if limit_size > 1:
                 limit_size = int(limit_size)
@@ -123,7 +129,7 @@ class FutsData(BaseData):
                 continue
             df = pd.read_parquet(file)
             df = self._validate(df)
-            data = df[FEATURE_COLS + LABEL_COLS]
+            data = df[ALL_COLS]
             datas.append(data)
         logger.info(f"number of files loaded: {len(datas)}")
         if len(datas) != 0:
@@ -139,7 +145,7 @@ class FutsData(BaseData):
         """
         logger.info(f"preprocssing data from {pattern}")
         num_rows = 0
-        num_cols = len(FEATURE_COLS + LABEL_COLS)
+        num_cols = len(ALL_COLS)
         for file in sorted(glob.glob(pattern)):
             if "xy" in file:
                 continue

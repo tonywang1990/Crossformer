@@ -17,6 +17,7 @@ parser.add_argument('--data', type=str, required=True, default='ETTh1', help='da
 parser.add_argument('--root_path', type=str, default='./datasets/', help='root path of the data file')
 parser.add_argument('--train_path', type=str, default='ETTh1.csv', help='train data file')  
 parser.add_argument('--val_path', type=str, default='ETTh1.csv', help='val data file')  
+parser.add_argument('--test_path', type=str, default='ETTh1.csv', help='test data file')  
 #parser.add_argument('--data_split', type=str, default='0.7,0.1,0.2',help='train/val/test split, can be ratio or number')
 parser.add_argument('--load_model', type=str, default=None, help='location to load model checkpoints')
 parser.add_argument('--checkpoints', type=str, default='./checkpoints/', help='location to store model checkpoints')
@@ -99,7 +100,10 @@ for ii in range(args.itr):
         print('>>>>>>> Start Training >>>>>>>>>>>>>>>>>>>>>>>>>>\n')
         exp.train()
     elif args.mode == 'eval':
-        print('>>>>>>> Start Evaluation >>>>>>>>>>>>>>>>>>>>>>>>\n')
-        exp.eval(setting, args.save_pred)
+        print('>>>>>>> Start Eval on Eval set >>>>>>>>>>>>>>>>>>>>>>>>\n')
+        exp.eval(setting, 'eval', args.save_pred)
+    elif args.mode == 'test':
+        print('>>>>>>> Start Eval on Test set >>>>>>>>>>>>>>>>>>>>>>>>\n')
+        exp.eval(setting, 'test', args.save_pred)
     else:
         raise NotImplementedError

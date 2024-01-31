@@ -53,7 +53,7 @@ class Exp_crossformer(Exp_Basic):
         if self.args.load_model:
             saved_model_path = os.path.join("./checkpoints", self.args.load_model)
             model.load_state_dict(torch.load(saved_model_path), strict=False)
-            logger.log("Loaded model from {saved_model_path}.")
+            logger.log(f"Loaded model from {saved_model_path}")
 
         if self.args.use_multi_gpu and self.args.use_gpu:
             model = nn.DataParallel(model, device_ids=self.args.device_ids)
@@ -82,6 +82,8 @@ class Exp_crossformer(Exp_Basic):
             data_path = args.train_path
         elif flag == "val":
             data_path = args.val_path
+        elif flag == "test":
+            data_path = args.test_path
 
         data_set = Dataset_Futs(
             root_dir=args.root_path,
@@ -116,21 +118,20 @@ class Exp_crossformer(Exp_Basic):
         # calcualte price change
         return np.corrcoef(preds, targets)[0, 1]
 
-    def vali(self, vali_data, vali_loader, criterion):
-        self.model.eval()
-        total_loss = []
-        preds, tgts = [], []
-        with torch.no_grad():
-            for i, (batch_x, batch_y) in tqdm(enumerate(vali_loader)):
-                pred, true = self._process_one_batch(vali_data, batch_x, batch_y)
-                tgts += true.detach().cpu()
-                preds += pred.detach().cpu()
-                loss = criterion(pred.detach().cpu(), true.detach().cpu())
-                total_loss.append(loss.detach().item())
-        total_loss = np.average(total_loss)
-        corr = self.calc_corr(tgts, preds)
-        self.model.train()
-        return total_loss, corr
+    def _process_one_batch(self, dataset_object, batch_x, batch_y, inverse=False):
+        batch_x = batch_x.float().to(self.device)
+        batch_y = batch_y.float().to(self.device)
+
+        outputs = self.model(batch_x)
+
+        if inverse:
+            outputs = dataset_object.inverse_transform(outputs)
+            batch_y = dataset_object.inverse_transform(batch_y)
+
+        # TODO: add args to select between point prediction and vector prediciton
+        # outputs = self._point_prediction(outputs).reshape(batch_y.shape)
+
+        return outputs, batch_y
 
     def train(self):
         logger = self.logger
@@ -163,7 +164,7 @@ class Exp_crossformer(Exp_Basic):
 
             self.model.train()
             epoch_time = time.time()
-            for i, (batch_x, batch_y) in enumerate(train_loader):
+            for i, (batch_x, batch_y, batch_ts) in enumerate(train_loader):
                 if i > train_steps:
                     break
 
@@ -213,71 +214,27 @@ class Exp_crossformer(Exp_Basic):
 
         return self.model
 
-    def test(self, setting, save_pred=False, inverse=False):
-        test_data, test_loader = self._get_data(flag="test")
-
+    def vali(self, vali_data, vali_loader, criterion):
+        self.logger.log("Starting validation run:")
         self.model.eval()
-
-        preds = []
-        trues = []
-        metrics_all = []
-        instance_num = 0
-
+        total_loss = []
+        preds, tgts = [], []
         with torch.no_grad():
-            for i, (batch_x, batch_y) in enumerate(test_loader):
-                pred, true = self._process_one_batch(
-                    test_data, batch_x, batch_y, inverse
-                )
-                batch_size = pred.shape[0]
-                instance_num += batch_size
-                batch_metric = (
-                    np.array(
-                        metric(pred.detach().cpu().numpy(), true.detach().cpu().numpy())
-                    )
-                    * batch_size
-                )
-                metrics_all.append(batch_metric)
-                if save_pred:
-                    preds.append(pred.detach().cpu().numpy())
-                    trues.append(true.detach().cpu().numpy())
+            for i, (batch_x, batch_y, batch_ts) in tqdm(enumerate(vali_loader)):
+                pred, true = self._process_one_batch(vali_data, batch_x, batch_y)
+                tgts += true.detach().cpu()
+                preds += pred.detach().cpu()
+                loss = criterion(pred.detach().cpu(), true.detach().cpu())
+                total_loss.append(loss.detach().item())
+        total_loss = np.average(total_loss)
+        corr = self.calc_corr(tgts, preds)
+        self.model.train()
+        return total_loss, corr
 
-        metrics_all = np.stack(metrics_all, axis=0)
-        metrics_mean = metrics_all.sum(axis=0) / instance_num
 
-        # result save
-        folder_path = "./results/" + setting + "/"
-        if not os.path.exists(folder_path):
-            os.makedirs(folder_path)
-
-        mae, mse, rmse, mape, mspe = metrics_mean
-        print("mse:{}, mae:{}".format(mse, mae))
-
-        np.save(folder_path + "metrics.npy", np.array([mae, mse, rmse, mape, mspe]))
-        if save_pred:
-            preds = np.concatenate(preds, axis=0)
-            trues = np.concatenate(trues, axis=0)
-            np.save(folder_path + "pred.npy", preds)
-            np.save(folder_path + "true.npy", trues)
-
-        return
-
-    def _process_one_batch(self, dataset_object, batch_x, batch_y, inverse=False):
-        batch_x = batch_x.float().to(self.device)
-        batch_y = batch_y.float().to(self.device)
-
-        outputs = self.model(batch_x)
-
-        if inverse:
-            outputs = dataset_object.inverse_transform(outputs)
-            batch_y = dataset_object.inverse_transform(batch_y)
-
-        # TODO: add args to select between point prediction and vector prediciton
-        # outputs = self._point_prediction(outputs).reshape(batch_y.shape)
-
-        return outputs, batch_y
-
-    def eval(self, setting, save_pred=False, inverse=False):
+    def eval(self, setting, flag='val', save_pred=False, inverse=False):
         # evaluate a saved model
+        self.logger.log(f"Starting eval run: save_pred = {save_pred}")
         args = self.args
         logger = self.logger
         # data_set = Dataset_MTS(
@@ -289,52 +246,55 @@ class Exp_crossformer(Exp_Basic):
         #    scale = True,
         #    scale_statistic = args.scale_statistic,
         # )
-        data_set, data_loader = self._get_data(flag="val")
+        data_set, data_loader = self._get_data(flag=flag)
 
         self.model.eval()
 
         preds = []
         trues = []
+        ts = []
         metrics_all = []
         instance_num = 0
 
         with torch.no_grad():
-            for i, (batch_x, batch_y) in tqdm(enumerate(data_loader)):
+            for i, (batch_x, batch_y, batch_ts) in tqdm(enumerate(data_loader)):
                 pred, true = self._process_one_batch(
                     data_set, batch_x, batch_y, inverse
                 )
                 batch_size = pred.shape[0]
                 instance_num += batch_size
-                batch_metric = (
-                    np.array(
-                        metric(pred.detach().cpu().numpy(), true.detach().cpu().numpy())
-                    )
-                    * batch_size
-                )
-                metrics_all.append(batch_metric)
+                #batch_metric = (
+                #    np.array(
+                #        metric(pred.detach().cpu().numpy(), true.detach().cpu().numpy())
+                #    )
+                #    * batch_size
+                #)
+                #metrics_all.append(batch_metric)
                 if save_pred:
                     preds.append(pred.detach().cpu().numpy())
                     trues.append(true.detach().cpu().numpy())
+                    ts.append(batch_ts)
 
-        metrics_all = np.stack(metrics_all, axis=0)
-        metrics_mean = metrics_all.sum(axis=0) / instance_num
+        #metrics_all = np.stack(metrics_all, axis=0)
+        #metrics_mean = metrics_all.sum(axis=0) / instance_num
 
         # result save
         folder_path = "./checkpoints/" + setting + "/"
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
 
-        mae, mse, rmse, mape, mspe = metrics_mean
-        ("mse:{}, mae:{}".format(mse, mae))
+        #mae, mse, rmse, mape, mspe = metrics_mean
+        #("mse:{}, mae:{}".format(mse, mae))
 
         corr = self.calc_corr(trues, preds)
-        logger.log(f"Correlation: {corr}:.3f")
+        logger.log(f"Correlation: {corr:.3f}")
 
-        np.save(folder_path + "metrics.npy", np.array([mae, mse, rmse, mape, mspe]))
+        #np.save(folder_path + "metrics.npy", np.array([mae, mse, rmse, mape, mspe]))
         if save_pred:
             preds = np.concatenate(preds, axis=0)
             trues = np.concatenate(trues, axis=0)
-            np.save(folder_path + "pred.npy", preds)
-            np.save(folder_path + "true.npy", trues)
+            ts = np.concatenate(ts, axis=0)
+            np.savez(folder_path + "output.npz", preds=preds, trues=trues, ts=ts)
+            logger.log(f"prediction and target saved to {folder_path}")
 
-        return mae, mse, rmse, mape, mspe
+        return corr

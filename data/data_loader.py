@@ -94,6 +94,7 @@ class Dataset_Futs(Dataset):
         self.IDs = self.data.all_IDs # list of data IDs, but also mapping between integer index and ID
         self.feature_df = self.data.feature_df
         self.labels_df = self.data.labels_df
+        self.ts_df = self.data.ts_df
 
     def __getitem__(self, ind):
         """
@@ -107,8 +108,9 @@ class Dataset_Futs(Dataset):
         """
         X = self.feature_df.loc[self.IDs[ind][0] : self.IDs[ind][1]].values  # (seq_length, feat_dim) array
         y = self.labels_df.loc[self.IDs[ind][1]].values  # (num_labels,) array
+        ts = self.ts_df.loc[self.IDs[ind][1]].values.astype(np.int64)
 
-        return torch.from_numpy(X), torch.from_numpy(y)#, self.IDs[ind][0]
+        return torch.from_numpy(X), torch.from_numpy(y), ts #, self.IDs[ind][0]
 
     def __len__(self):
         return len(self.IDs)
