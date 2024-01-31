@@ -47,7 +47,12 @@ class EarlyStopping:
     def save_checkpoint(self, val_loss, model, path):
         if self.verbose:
             print(f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}).  Saving model ...')
-        torch.save(model.state_dict(), path+'/'+'checkpoint.pth')
+        state_dict = (
+            model.module.state_dict()
+            if isinstance(model, DataParallel)
+            else model.state_dict()
+        )
+        torch.save(state_dict, path+'/'+'checkpoint.pth')
         self.val_loss_min = val_loss
 
 class StandardScaler():
@@ -80,3 +85,9 @@ def string_split(str_for_split):
     value_list = [eval(x) for x in str_split]
 
     return value_list
+
+def count_parameters(model, trainable=False):
+    if trainable:
+        return sum(p.numel() for p in model.parameters() if p.requires_grad)
+    else:
+        return sum(p.numel() for p in model.parameters())

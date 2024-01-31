@@ -16,6 +16,7 @@ parser.add_argument('--root_path', type=str, default='./datasets/', help='root p
 parser.add_argument('--train_path', type=str, default='ETTh1.csv', help='train data file')  
 parser.add_argument('--val_path', type=str, default='ETTh1.csv', help='val data file')  
 #parser.add_argument('--data_split', type=str, default='0.7,0.1,0.2',help='train/val/test split, can be ratio or number')
+parser.add_argument('--load_model', type=str, default=None, help='location to load model checkpoints')
 parser.add_argument('--checkpoints', type=str, default='./checkpoints/', help='location to store model checkpoints')
 
 parser.add_argument('--in_len', type=int, default=96, help='input MTS length (T)')
@@ -24,7 +25,8 @@ parser.add_argument('--seg_len', type=int, default=6, help='segment length (L_se
 parser.add_argument('--win_size', type=int, default=2, help='window size for segment merge')
 parser.add_argument('--factor', type=int, default=10, help='num of routers in Cross-Dimension Stage of TSA (c)')
 
-parser.add_argument('--data_dim', type=int, default=7, help='Number of dimensions of the MTS data (D)')
+parser.add_argument('--input_dim', type=int, default=7, help='Number of dimensions of the MTS data (D)')
+parser.add_argument('--output_dim', type=int, default=1, help='Number of dimensions of the forcasted data (d)')
 parser.add_argument('--d_model', type=int, default=256, help='dimension of hidden states (d_model)')
 parser.add_argument('--d_ff', type=int, default=512, help='dimension of MLP in transformer')
 parser.add_argument('--n_heads', type=int, default=4, help='num of heads')
@@ -37,7 +39,7 @@ parser.add_argument('--num_workers', type=int, default=0, help='data loader num 
 parser.add_argument('--batch_size', type=int, default=32, help='batch size of train input data')
 parser.add_argument('--train_epochs', type=int, default=20, help='train epochs')
 parser.add_argument('--patience', type=int, default=3, help='early stopping patience')
-parser.add_argument('--learning_rate', type=float, default=1e-4, help='optimizer initial learning rate')
+parser.add_argument('--learning_rate', type=float, default=1e-3, help='optimizer initial learning rate')
 parser.add_argument('--lradj', type=str, default='type1',help='adjust learning rate')
 parser.add_argument('--itr', type=int, default=1, help='experiments times')
 

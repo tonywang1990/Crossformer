@@ -44,10 +44,10 @@ FEATURE_COLS = [
 VALIDATION_COL = "book_valid_field::book=book_UR"
 
 LABEL_COLS = [
-    "extdata::book=book_UR::data_name=forward_return_vwap_10s",
-    "extdata::book=book_UR::data_name=forward_return_vwap_60s",
+    #"extdata::book=book_UR::data_name=forward_return_vwap_10s",
+    #"extdata::book=book_UR::data_name=forward_return_vwap_60s",
     "extdata::book=book_UR::data_name=forward_return_vwap_600s",
-    "extdata::book=book_UR::data_name=forward_return_vwap_1800s",
+    #"extdata::book=book_UR::data_name=forward_return_vwap_1800s",
 ]
 
 
@@ -76,12 +76,15 @@ class FutsData(BaseData):
         self,
         root_dir,
         pattern,
+        in_len,
+        out_len,
         file_list=None,
         n_proc=1,
         limit_size=None,
         config=None,
+
     ):
-        self.max_seq_len = 1024
+        self.max_seq_len = in_len
         # process features
         data_df = self.read_data(os.path.join(root_dir, pattern))
         # for large size of data that don't fit into memory
@@ -93,7 +96,7 @@ class FutsData(BaseData):
         # all_IDs uses a compressed representation: i-th position in all_ID maps to (start, end) of the feature_df and start of the label_df.
         self.all_IDs = [
             [i-self.max_seq_len+1, i]
-            for i in range(self.max_seq_len-1, num_rows)
+            for i in range(self.max_seq_len-1, num_rows-out_len)
         ]
         self.all_df = feature_df
         self.labels_df = labels_df
