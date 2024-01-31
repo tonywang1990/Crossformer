@@ -90,9 +90,9 @@ for ii in range(args.itr):
                 args.in_len, args.out_len, args.seg_len, args.win_size, args.factor,
                 args.d_model, args.n_heads, args.e_layers, ii)
 
-    exp = Exp(args) # set experiments
+    exp = Exp(args, setting) # set experiments
     print('>>>>>>>start training : {}>>>>>>>>>>>>>>>>>>>>>>>>>>'.format(setting))
-    exp.train(setting)
+    exp.train()
     
-    print('>>>>>>>testing : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'.format(setting))
+    #print('>>>>>>>testing : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'.format(setting))
     #exp.test(setting, args.save_pred)

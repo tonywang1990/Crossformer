@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import json
+from torch.nn import DataParallel
 
 def adjust_learning_rate(optimizer, epoch, args):
     if args.lradj=='type1':
@@ -91,3 +92,15 @@ def count_parameters(model, trainable=False):
         return sum(p.numel() for p in model.parameters() if p.requires_grad)
     else:
         return sum(p.numel() for p in model.parameters())
+
+class Logger:
+    def __init__(self, log_file: str):
+        self.log_file = log_file
+
+    def log(self, message: str):
+    # print message to screen
+        print(message)
+        
+        # save message to log file
+        with open(self.log_file, "a") as f:
+            f.write(message + "\n")
