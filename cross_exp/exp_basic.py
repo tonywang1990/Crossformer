@@ -1,10 +1,16 @@
 import os
 import torch
 import numpy as np
+from utils.tools import Logger
 
 class Exp_Basic(object):
-    def __init__(self, args):
+    def __init__(self, args, setting):
         self.args = args
+        path = os.path.join(args.checkpoints, setting)
+        if not os.path.exists(path):
+            os.makedirs(path)
+        self.path = path
+        self.logger = Logger(os.path.join(path, "logfile.txt"))
         self.device = self._acquire_device()
         self.model = self._build_model().to(self.device)
 

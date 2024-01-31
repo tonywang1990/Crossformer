@@ -1,6 +1,7 @@
 import argparse
 import logging
 import os
+from datetime import datetime
 
 import torch
 
@@ -11,6 +12,7 @@ logging.basicConfig(level=logging.INFO)
 
 parser = argparse.ArgumentParser(description='CrossFormer')
 
+parser.add_argument('--mode', type=str, required=True, default='train', help='running model: [train, eval]')
 parser.add_argument('--data', type=str, required=True, default='ETTh1', help='data')
 parser.add_argument('--root_path', type=str, default='./datasets/', help='root path of the data file')
 parser.add_argument('--train_path', type=str, default='ETTh1.csv', help='train data file')  
@@ -86,13 +88,18 @@ Exp = Exp_crossformer
 
 for ii in range(args.itr):
     # setting record of experiments
-    setting = 'Crossformer_{}_il{}_ol{}_sl{}_win{}_fa{}_dm{}_nh{}_el{}_itr{}'.format(args.data, 
+    now = datetime.now()
+    time_str = now.strftime("%m_%d_%H_%M_%S")
+    setting = '{}_{}_il{}_ol{}_sl{}_win{}_fa{}_dm{}_nh{}_el{}_itr{}'.format(args.data, time_str, 
                 args.in_len, args.out_len, args.seg_len, args.win_size, args.factor,
                 args.d_model, args.n_heads, args.e_layers, ii)
 
     exp = Exp(args, setting) # set experiments
-    print('>>>>>>>start training : {}>>>>>>>>>>>>>>>>>>>>>>>>>>'.format(setting))
-    exp.train()
-    
-    #print('>>>>>>>testing : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'.format(setting))
-    #exp.test(setting, args.save_pred)
+    if args.mode == 'train':
+        print('>>>>>>> Start Training >>>>>>>>>>>>>>>>>>>>>>>>>>\n')
+        exp.train()
+    elif args.mode == 'eval':
+        print('>>>>>>> Start Evaluation >>>>>>>>>>>>>>>>>>>>>>>>\n')
+        exp.eval(setting, args.save_pred)
+    else:
+        raise NotImplementedError

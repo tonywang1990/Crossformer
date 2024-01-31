@@ -5,6 +5,7 @@ import time
 import warnings
 import logging
 
+from tqdm import tqdm
 import numpy as np
 import torch
 import torch.nn as nn
@@ -24,12 +25,7 @@ warnings.filterwarnings("ignore")
 
 class Exp_crossformer(Exp_Basic):
     def __init__(self, args, setting):
-        super(Exp_crossformer, self).__init__(args)
-        path = os.path.join(args.checkpoints, setting)
-        if not os.path.exists(path):
-            os.makedirs(path)
-        self.path = path
-        self.logger = Logger(os.join(path, "logfile"))
+        super(Exp_crossformer, self).__init__(args, setting)
 
     def _build_model(self):
         model = Crossformer(
@@ -101,7 +97,7 @@ class Exp_crossformer(Exp_Basic):
             num_workers=args.num_workers,
             drop_last=drop_last,
         )
-        self.logger.log(f"data_loader number of batches = {len(data_loader)}")
+        self.logger.log(f"Loaded {flag} dataset, total number of batches = {len(data_loader)}")
 
         return data_set, data_loader
 
@@ -125,7 +121,7 @@ class Exp_crossformer(Exp_Basic):
         total_loss = []
         preds, tgts = [], []
         with torch.no_grad():
-            for i, (batch_x, batch_y) in enumerate(vali_loader):
+            for i, (batch_x, batch_y) in tqdm(enumerate(vali_loader)):
                 pred, true = self._process_one_batch(vali_data, batch_x, batch_y)
                 tgts += true.detach().cpu()
                 preds += pred.detach().cpu()
@@ -136,7 +132,7 @@ class Exp_crossformer(Exp_Basic):
         self.model.train()
         return total_loss, corr
 
-    def train(self, setting):
+    def train(self):
         logger = self.logger
         path = self.path
 
@@ -283,6 +279,7 @@ class Exp_crossformer(Exp_Basic):
     def eval(self, setting, save_pred=False, inverse=False):
         # evaluate a saved model
         args = self.args
+        logger = self.logger
         # data_set = Dataset_MTS(
         #    root_path=args.root_path,
         #    data_path=args.data_path,
@@ -302,7 +299,7 @@ class Exp_crossformer(Exp_Basic):
         instance_num = 0
 
         with torch.no_grad():
-            for i, (batch_x, batch_y) in enumerate(data_loader):
+            for i, (batch_x, batch_y) in tqdm(enumerate(data_loader)):
                 pred, true = self._process_one_batch(
                     data_set, batch_x, batch_y, inverse
                 )
@@ -328,7 +325,10 @@ class Exp_crossformer(Exp_Basic):
             os.makedirs(folder_path)
 
         mae, mse, rmse, mape, mspe = metrics_mean
-        print("mse:{}, mae:{}".format(mse, mae))
+        ("mse:{}, mae:{}".format(mse, mae))
+
+        corr = self.calc_corr(trues, preds)
+        logger.log(f"Correlation: {corr}:.3f")
 
         np.save(folder_path + "metrics.npy", np.array([mae, mse, rmse, mape, mspe]))
         if save_pred:
