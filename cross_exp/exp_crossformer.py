@@ -1,23 +1,22 @@
 import json
+import logging
 import os
 import pickle
 import time
 import warnings
-import logging
 
-from tqdm import tqdm
 import numpy as np
 import torch
 import torch.nn as nn
+from cross_exp.exp_basic import Exp_Basic
 from cross_models.cross_former import Crossformer
 from data.data_loader import Dataset_Futs, Dataset_Futs_Pretrain  # , Dataset_MTS
 from torch import optim
 from torch.nn import DataParallel
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 from utils.metrics import metric
-from utils.tools import EarlyStopping, adjust_learning_rate, count_parameters, Logger
-
-from cross_exp.exp_basic import Exp_Basic
+from utils.tools import EarlyStopping, Logger, adjust_learning_rate, count_parameters
 
 warnings.filterwarnings("ignore")
 #logger = logging.getLogger("__main__")
@@ -45,7 +44,7 @@ class Exp_crossformer(Exp_Basic):
             self.device,
         ).float()
         logger = self.logger
-        logger.log("Model:\n{}".format(model))
+        #logger.log("Model:\n{}".format(model))
         logger.log("Total number of parameters: {}".format(count_parameters(model)))
         logger.log(
             "Trainable parameters: {}".format(count_parameters(model, trainable=True))

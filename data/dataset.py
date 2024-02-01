@@ -48,8 +48,8 @@ TS_COLS = ['ts']
 LABEL_COLS = [
     #"extdata::book=book_UR::data_name=forward_return_vwap_10s",
     #"extdata::book=book_UR::data_name=forward_return_vwap_60s",
-    "extdata::book=book_UR::data_name=forward_return_vwap_600s",
-    #"extdata::book=book_UR::data_name=forward_return_vwap_1800s",
+    #"extdata::book=book_UR::data_name=forward_return_vwap_600s",
+    "extdata::book=book_UR::data_name=forward_return_vwap_1800s",
 ]
 
 ALL_COLS = FEATURE_COLS + LABEL_COLS + TS_COLS 

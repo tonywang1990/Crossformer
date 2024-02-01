@@ -1,7 +1,9 @@
 import os
-import torch
+
 import numpy as np
+import torch
 from utils.tools import Logger
+
 
 class Exp_Basic(object):
     def __init__(self, args, setting):
@@ -13,6 +15,7 @@ class Exp_Basic(object):
         self.logger = Logger(os.path.join(path, "logfile.txt"))
         self.device = self._acquire_device()
         self.model = self._build_model().to(self.device)
+        self.logger.log(args)
 
     def _build_model(self):
         raise NotImplementedError
