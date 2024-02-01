@@ -13,7 +13,7 @@ TEST=data/ZCE_CH_UR/test/daily_frame.*.parquet
 #VAL=data/ZCE_CH_UR/train/daily_frame.20231205.parquet
 
 # Train
-#python main_crossformer.py --data futs --root_path $ROOT_PATH --train_path $TRAIN --val_path $VAL --in_len 4096 --out_len 1 --seg_len 64 --input_dim 24 --output_dim 1 --num_workers 8 --batch_size 128 --train_epoch 20 --learning_rate 1e-3 --lradj none  --mode train #--load_model Crossformer_futs_il1024_ol1_sl32_win2_fa10_dm256_nh4_el3_itr0/checkpoint.pth
+#python main_crossformer.py --data futs --root_path $ROOT_PATH --train_path $TRAIN --val_path $VAL --in_len 4096 --out_len 1 --seg_len 64 --input_dim 24 --output_dim 1 --num_workers 8 --batch_size 128 --train_epoch 20 --learning_rate 1e-3 --lradj none --mode train 
 
 # Eval
 python main_crossformer.py --data futs --root_path $ROOT_PATH --train_path $TRAIN --val_path $VAL --test_path $TEST --in_len 4096 --out_len 1 --seg_len 64 --input_dim 24 --output_dim 1 --num_workers 8 --batch_size 256 --train_epoch 20 --learning_rate 1e-3 --lradj none --mode test --save_pred --load_model futs_01_31_21_42_56_il4096_ol1_sl64_win2_fa10_dm256_nh4_el3_itr0/checkpoint.pth
